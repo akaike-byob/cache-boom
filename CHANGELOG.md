@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- The default `missMinWriteTokens` is 10,000 tokens, up from 5,000.
+
 ## 0.3.0
 
 - The cache miss and huge write thresholds, and the time the label stays, are options: `missMinWriteTokens`, `hugeWriteTokens` and `labelLingerSeconds`.

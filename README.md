@@ -32,7 +32,7 @@ After each model call, the mod checks the call's cache usage:
 
 | Event | Rule | Label above the prompt |
 | --- | --- | --- |
-| Cache miss | 5,000 tokens or more written, and more written than read | `BOOM: prompt cache miss, 87.4k written, 1.2k read` |
+| Cache miss | 10,000 tokens or more written, and more written than read | `BOOM: prompt cache miss, 87.4k written, 1.2k read` |
 | Huge write | 50,000 tokens or more written | `BOOM: huge cache write, 62.0k tokens` |
 
 A call from a subagent says so: `BOOM: subagent prompt cache miss, ...`.
@@ -55,7 +55,7 @@ Typing `boom` at the prompt finds it.
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `missMinWriteTokens` | `5000` | A call that writes at least this many tokens, and more than it reads, is a cache miss. |
+| `missMinWriteTokens` | `10000` | A call that writes at least this many tokens, and more than it reads, is a cache miss. |
 | `hugeWriteTokens` | `50000` | A call that writes at least this many tokens is a huge write, even with a warm cache. |
 | `labelLingerSeconds` | `8` | How long the label stays after the explosion ends. |
 

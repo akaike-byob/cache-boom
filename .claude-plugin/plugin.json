@@ -1,6 +1,6 @@
 {
   "name": "cache-boom",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Plays an explosion above the prompt when a model call misses the prompt cache or writes a lot to it",
   "author": {
     "name": "Akaike Technologies"
@@ -17,7 +17,7 @@
       "type": "number",
       "title": "Cache miss threshold (tokens)",
       "description": "A call that writes at least this many tokens to the cache, and writes more than it reads, counts as a miss.",
-      "default": 5000,
+      "default": 10000,
       "min": 0
     },
     "hugeWriteTokens": {

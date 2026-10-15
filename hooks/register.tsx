@@ -30,7 +30,7 @@ export type BlastSettings = {
   labelLingerMs: number
 }
 
-const DEFAULT_SETTINGS: BlastSettings = { missMinWriteTokens: 5_000, hugeWriteTokens: 50_000, labelLingerMs: 8_000 }
+const DEFAULT_SETTINGS: BlastSettings = { missMinWriteTokens: 10_000, hugeWriteTokens: 50_000, labelLingerMs: 8_000 }
 
 // The engine checks options against the manifest; this still refuses a value it cannot use, naming the field.
 export function readSettings(options: PluginOptions): { settings: BlastSettings; problems: string[] } {

@@ -75,7 +75,7 @@ describe('classifyUsage', () => {
 describe('configured thresholds', () => {
   test('unset fields keep the defaults', () => {
     expect(readSettings({})).toEqual({
-      settings: { missMinWriteTokens: 5_000, hugeWriteTokens: 50_000, labelLingerMs: 8_000 },
+      settings: { missMinWriteTokens: 10_000, hugeWriteTokens: 50_000, labelLingerMs: 8_000 },
       problems: [],
     })
   })
