@@ -1,0 +1,14 @@
+{
+  "name": "cache-boom",
+  "owner": {
+    "name": "Akaike Technologies"
+  },
+  "description": "cache-boom: an explosion above the Claude Code prompt when a model call misses the prompt cache",
+  "plugins": [
+    {
+      "name": "cache-boom",
+      "source": "./",
+      "description": "Plays an explosion above the prompt when a model call misses the prompt cache or writes a lot to it"
+    }
+  ]
+}

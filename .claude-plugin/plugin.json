@@ -1,0 +1,15 @@
+{
+  "name": "cache-boom",
+  "version": "0.1.0",
+  "description": "Plays an explosion above the prompt when a model call misses the prompt cache or writes a lot to it",
+  "author": {
+    "name": "Akaike Technologies"
+  },
+  "license": "MIT",
+  "keywords": [
+    "prompt-caching",
+    "cost",
+    "mod"
+  ],
+  "types": "./types/index.d.ts"
+}
