@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On, TurnStepInput, TurnUsage } from 'claude-code'
 
-import { classifyUsage, drawAnimatedSvg, drawFrame } from '../hooks/register'
+import { classifyUsage, drawAnimatedSvg, drawFrame, readSettings } from '../hooks/register'
 
 const BAND = {
   component: 'AbovePrompt',
@@ -70,6 +70,54 @@ describe('classifyUsage', () => {
   test('a tiny cold write is quiet', () => {
     expect(classifyUsage(usage(800, 0))).toBeNull()
   })
+})
+
+describe('configured thresholds', () => {
+  test('unset fields keep the defaults', () => {
+    expect(readSettings({})).toEqual({
+      settings: { missMinWriteTokens: 5_000, hugeWriteTokens: 50_000, labelLingerMs: 8_000 },
+      problems: [],
+    })
+  })
+  test('a raised miss threshold quiets a mid-size miss', () => {
+    const { settings } = readSettings({ missMinWriteTokens: 20_000 })
+    expect(classifyUsage(usage(12_000, 0), settings)).toBeNull()
+    expect(classifyUsage(usage(25_000, 0), settings)).toBe('miss')
+  })
+  test('a lowered huge-write threshold catches a smaller warm write', () => {
+    const { settings } = readSettings({ hugeWriteTokens: 10_000 })
+    expect(classifyUsage(usage(12_000, 120_000), settings)).toBe('write')
+  })
+  test('a negative value falls back to the default and names the field', () => {
+    const { settings, problems } = readSettings({ hugeWriteTokens: -1 })
+    expect(settings.hugeWriteTokens).toBe(50_000)
+    expect(problems[0]).toContain('hugeWriteTokens')
+  })
+})
+
+test('a configured threshold applies to live model calls', { options: { missMinWriteTokens: 100_000, hugeWriteTokens: 200_000 } }, async ($, on) => {
+  mock.clock(on)
+  answerStep(on, usage(90_000, 4_000))
+
+  await runStep($, STEP)
+
+  const ui = await $.ui.mount({ plugin: 'cache-boom', surface: 'terminal', ...BAND })
+  expect(await ui.find({ type: 'Text', text: /BOOM/ })).toBeUndefined()
+})
+
+test('the label lingers for the configured time', { options: { labelLingerSeconds: 2 } }, async ($, on) => {
+  const clock = mock.clock(on)
+  answerStep(on, usage(90_000, 4_000))
+
+  await runStep($, STEP)
+  await clock.advance(2_000)
+  let ui = await $.ui.mount({ plugin: 'cache-boom', surface: 'terminal', ...BAND })
+  expect(await ui.find({ type: 'Text', text: /BOOM/ })).toBeDefined()
+  await ui.unmount()
+
+  await clock.advance(2_000)
+  ui = await $.ui.mount({ plugin: 'cache-boom', surface: 'terminal', ...BAND })
+  expect(await ui.find({ type: 'Text', text: /BOOM/ })).toBeUndefined()
 })
 
 test('every frame encodes one triplet per cell', () => {

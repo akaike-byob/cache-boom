@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0
+
+- The cache miss and huge write thresholds, and the time the label stays, are options: `missMinWriteTokens`, `hugeWriteTokens` and `labelLingerSeconds`.
+- The README animation shows the terminal and desktop explosions in one image, looping in step. `assets/desktop-explosion.gif` is gone.
+
 ## 0.2.1
 
 - The label stays for 8 seconds after the explosion ends, so you can read it. It used to clear with the animation at 1.6 seconds.

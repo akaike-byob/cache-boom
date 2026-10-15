@@ -1,16 +1,11 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, ModelUsage, Register } from 'claude-code'
+import type { EngineInterface, ModelUsage, PluginOptions, Register } from 'claude-code'
 
 import type { Blast, BlastKind, BlastReading, PromptReport } from '../types'
 
-// Below this a write is too small to be worth a bang (one tool result, a short prompt).
-const MISS_MIN_WRITE_TOKENS = 5_000
-const HUGE_WRITE_TOKENS = 50_000
 
 const FRAME_MS = 33
 const FRAME_COUNT = 48
-// The label outlives the animation long enough to be read.
-const LABEL_LINGER_MS = 8_000
 const MAX_COLUMNS = 64
 const ROWS = 9
 const RASTER_KEY = 'boom'
@@ -27,13 +22,47 @@ const DEFAULT_COLOR = 0x01000000
 
 const blast = atom({ plugin: 'cache-boom', key: 'blast' } as const, null)
 
+export type BlastSettings = {
+  // Below this a write is too small to be worth a bang (one tool result, a short prompt).
+  missMinWriteTokens: number
+  hugeWriteTokens: number
+  // The label outlives the animation long enough to be read.
+  labelLingerMs: number
+}
+
+const DEFAULT_SETTINGS: BlastSettings = { missMinWriteTokens: 5_000, hugeWriteTokens: 50_000, labelLingerMs: 8_000 }
+
+// The engine checks options against the manifest; this still refuses a value it cannot use, naming the field.
+export function readSettings(options: PluginOptions): { settings: BlastSettings; problems: string[] } {
+  const problems: string[] = []
+  const field = (name: string, fallback: number) => {
+    const value = options[name]
+    if (value === undefined) {
+      return fallback
+    }
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+      problems.push(`${name} must be a number of 0 or more, got ${JSON.stringify(value)}; using ${fallback}`)
+      return fallback
+    }
+    return value
+  }
+  return {
+    settings: {
+      missMinWriteTokens: field('missMinWriteTokens', DEFAULT_SETTINGS.missMinWriteTokens),
+      hugeWriteTokens: field('hugeWriteTokens', DEFAULT_SETTINGS.hugeWriteTokens),
+      labelLingerMs: field('labelLingerSeconds', DEFAULT_SETTINGS.labelLingerMs / 1000) * 1000,
+    },
+    problems,
+  }
+}
+
 // A miss writes more than it reads: the cached prefix lapsed or changed.
-export function classifyUsage(usage: ModelUsage): BlastKind | null {
+export function classifyUsage(usage: ModelUsage, settings: BlastSettings = DEFAULT_SETTINGS): BlastKind | null {
   const written = usage.cache_creation_input_tokens
-  if (written >= MISS_MIN_WRITE_TOKENS && written > usage.cache_read_input_tokens) {
+  if (written >= settings.missMinWriteTokens && written > usage.cache_read_input_tokens) {
     return 'miss'
   }
-  if (written >= HUGE_WRITE_TOKENS) {
+  if (written >= settings.hugeWriteTokens) {
     return 'write'
   }
   return null
@@ -305,6 +334,7 @@ let rasterColumns = MAX_COLUMNS
 let stopAnimation: (() => void) | null = null
 let promptReport: PromptReport = { blastCount: 0, lastBlast: null }
 let blastSequence = 0
+let settings = DEFAULT_SETTINGS
 
 async function writePromptReport($: EngineInterface) {
   const home = await $.env.get('HOME')
@@ -328,7 +358,7 @@ async function explode($: EngineInterface, reading: BlastReading) {
     if (frame >= FRAME_COUNT) {
       timer.cancel()
       void update($, blast, current => current && { ...current, frame: FRAME_COUNT })
-      const linger = $.clock.after(LABEL_LINGER_MS, () => {
+      const linger = $.clock.after(settings.labelLingerMs, () => {
         stopAnimation = null
         void update($, blast, () => null)
       })
@@ -348,7 +378,17 @@ async function explode($: EngineInterface, reading: BlastReading) {
   }
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const configured = readSettings(options)
+  settings = configured.settings
+
+  on('session.start', async ($, e, next) => {
+    for (const problem of configured.problems) {
+      $.ui.log(`cache-boom: ${problem}`)
+    }
+    return next(e)
+  })
+
   // commands/boom.md declares the command, so the desktop lists it before the session's engine starts.
   on('command.run', { command: 'cache-boom:boom' }, async $ => {
     await explode($, { kind: 'miss', cacheWriteTokens: 87_400, cacheReadTokens: 1_200, isSubagent: false })
@@ -367,7 +407,7 @@ export const register: Register = on => {
   // Every loop steps through here: main, subagents, and their subagents.
   on('turn.step', async function* ($, e, next) {
     const response = yield* next(e)
-    const kind = response.usage ? classifyUsage(response.usage) : null
+    const kind = response.usage ? classifyUsage(response.usage, settings) : null
     if (kind && response.usage) {
       await explode($, {
         kind,
