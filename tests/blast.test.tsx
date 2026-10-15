@@ -86,7 +86,7 @@ test('the desktop explosion fits the Svg limit and differs per blast', () => {
   expect(drawAnimatedSvg(2)).not.toBe(first)
 })
 
-test('a cache miss explodes in the band and clears after the animation', async ($, on) => {
+test('a cache miss explodes, leaves its label to be read, then clears', async ($, on) => {
   const clock = mock.clock(on)
   const disk = answerStep(on, usage(90_000, 4_000))
 
@@ -111,6 +111,15 @@ test('a cache miss explodes in the band and clears after the animation', async (
   }
 
   await clock.advance(2_000)
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await $.ui.mount({ plugin: 'cache-boom', surface, ...BAND })
+    expect(await ui.find({ type: 'Text', text: /BOOM/ })).toBeDefined()
+    expect(await ui.find({ key: 'boom' })).toBeUndefined()
+    expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+    await ui.unmount()
+  }
+
+  await clock.advance(8_000)
   const ui = await $.ui.mount({ plugin: 'cache-boom', surface: 'terminal', ...BAND })
   expect(await ui.find({ type: 'Text', text: /BOOM/ })).toBeUndefined()
 })

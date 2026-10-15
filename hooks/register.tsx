@@ -9,6 +9,8 @@ const HUGE_WRITE_TOKENS = 50_000
 
 const FRAME_MS = 33
 const FRAME_COUNT = 48
+// The label outlives the animation long enough to be read.
+const LABEL_LINGER_MS = 8_000
 const MAX_COLUMNS = 64
 const ROWS = 9
 const RASTER_KEY = 'boom'
@@ -324,8 +326,16 @@ async function explode($: EngineInterface, reading: BlastReading) {
   const timer = $.clock.every(FRAME_MS, () => {
     frame += 1
     if (frame >= FRAME_COUNT) {
-      stopAnimation?.()
-      void update($, blast, () => null)
+      timer.cancel()
+      void update($, blast, current => current && { ...current, frame: FRAME_COUNT })
+      const linger = $.clock.after(LABEL_LINGER_MS, () => {
+        stopAnimation = null
+        void update($, blast, () => null)
+      })
+      stopAnimation = () => {
+        linger.cancel()
+        stopAnimation = null
+      }
       return
     }
     if (bandRequestId) {
@@ -385,7 +395,8 @@ export const register: Register = on => {
 
     const elements = $.ui.resolve(e)
     const { Box, Text } = elements
-    if (e.surface === 'terminal' && 'Raster' in elements) {
+    const isAnimating = current.frame < FRAME_COUNT
+    if (isAnimating && e.surface === 'terminal' && 'Raster' in elements) {
       const { Raster } = elements
       return (
         <Box flexDirection="column">
@@ -394,7 +405,7 @@ export const register: Register = on => {
         </Box>
       )
     }
-    if ('Svg' in elements) {
+    if (isAnimating && 'Svg' in elements) {
       const { Svg } = elements
       return (
         <Box flexDirection="column">

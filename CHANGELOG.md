@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- The label stays for 8 seconds after the explosion ends, so you can read it. It used to clear with the animation at 1.6 seconds.
+
 ## 0.2.0
 
 - The desktop app plays the explosion too, as an animated SVG above the label. It previously showed the label alone.

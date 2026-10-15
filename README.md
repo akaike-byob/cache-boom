@@ -43,7 +43,7 @@ After each model call, the mod checks the call's cache usage:
 
 A call from a subagent says so: `BOOM: subagent prompt cache miss, ...`.
 
-An animated explosion plays above the label for about 1.6 seconds. The terminal draws it in character cells. The desktop app draws the same explosion as an animated SVG. Other surfaces show the label alone.
+An animated explosion plays above the label for about 1.6 seconds. The label then stays for 8 more seconds, so you can read it. The terminal draws it in character cells. The desktop app draws the same explosion as an animated SVG. Other surfaces show the label alone.
 
 Small writes are normal and stay quiet. Each turn writes its new messages, a few hundred to a few thousand tokens.
 
