@@ -4,6 +4,8 @@ A Claude Code mod that plays an explosion above the prompt when a model call mis
 
 A cache miss means Claude Code wrote the conversation to the cache again instead of reading it. That costs 12.5x to 80x a cache read, depending on the cache lifetime and the model. Misses are easy to cause and invisible by default: switching models, editing an early message, a slow reply that lets the cache expire, an MCP server reconnecting. cache-boom makes each one visible as it happens, in the main conversation and in subagents.
 
+![The cache-boom explosion above the Claude Code prompt](assets/explosion.svg)
+
 ## Install
 
 At the prompt of a Claude Code terminal session:
@@ -111,6 +113,16 @@ Layout:
 | `hooks/register.tsx` | The mod. |
 | `types/index.d.ts` | The mod's state contract and report types. |
 | `tests/blast.test.tsx` | Tests, run by `claude plugin test`. |
+| `assets/explosion.svg` | The README animation, drawn from the mod's own frames. |
+| `scripts/explosion-image/` | Regenerates `assets/explosion.svg`. |
+
+After changing the explosion, regenerate the README animation:
+
+```
+cd scripts/explosion-image
+bun --preload ./stub-claude-code.ts ./dump-frames.ts ../../hooks/register.tsx > /tmp/frames.json
+python3 render-svg.py /tmp/frames.json ../../assets/explosion.svg
+```
 
 ## License
 
