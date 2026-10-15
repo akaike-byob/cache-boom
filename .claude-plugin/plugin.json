@@ -1,6 +1,6 @@
 {
   "name": "cache-boom",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Plays an explosion above the prompt when a model call misses the prompt cache or writes a lot to it",
   "author": {
     "name": "Akaike Technologies"

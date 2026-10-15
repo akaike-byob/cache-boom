@@ -7,7 +7,8 @@ export type BlastReading = {
   isSubagent: boolean
 }
 
-export type Blast = BlastReading & { frame: number }
+// id tells one explosion from the next; frame drives the terminal raster.
+export type Blast = BlastReading & { id: number; frame: number }
 
 // What the status line reads from ~/.claude/cache-boom/<session id>.json.
 export type PromptReport = {

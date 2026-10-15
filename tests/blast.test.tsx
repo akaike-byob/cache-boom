@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On, TurnStepInput, TurnUsage } from 'claude-code'
 
-import { classifyUsage, drawFrame } from '../hooks/register'
+import { classifyUsage, drawAnimatedSvg, drawFrame } from '../hooks/register'
 
 const BAND = {
   component: 'AbovePrompt',
@@ -79,6 +79,13 @@ test('every frame encodes one triplet per cell', () => {
   }
 })
 
+test('the desktop explosion fits the Svg limit and differs per blast', () => {
+  const first = drawAnimatedSvg(1)
+  expect(first.length).toBeLessThan(131_072)
+  expect(first.match(/<line/g)?.length).toBe(44)
+  expect(drawAnimatedSvg(2)).not.toBe(first)
+})
+
 test('a cache miss explodes in the band and clears after the animation', async ($, on) => {
   const clock = mock.clock(on)
   const disk = answerStep(on, usage(90_000, 4_000))
@@ -95,6 +102,10 @@ test('a cache miss explodes in the band and clears after the animation', async (
     expect(await ui.find({ type: 'Text', text: /cache miss, 90\.0k written, 4\.0k read/ })).toBeDefined()
     if (surface === 'terminal') {
       expect(await ui.find({ key: 'boom' })).toBeDefined()
+    } else {
+      const svg = await ui.find({ type: 'Svg' })
+      expect(svg?.props.isInteractive).toBe(true)
+      expect(String(svg?.props.source)).toContain('<animate')
     }
     await ui.unmount()
   }

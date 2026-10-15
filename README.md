@@ -4,7 +4,13 @@ A Claude Code mod that plays an explosion above the prompt when a model call mis
 
 A cache miss means Claude Code wrote the conversation to the cache again instead of reading it. That costs 12.5x to 80x a cache read, depending on the cache lifetime and the model. Misses are easy to cause and invisible by default: switching models, editing an early message, a slow reply that lets the cache expire, an MCP server reconnecting. cache-boom makes each one visible as it happens, in the main conversation and in subagents.
 
+In the terminal:
+
 ![The cache-boom explosion above the Claude Code prompt](assets/explosion.svg)
+
+In the desktop app:
+
+![The cache-boom explosion in the Claude Code desktop app](assets/desktop-explosion.gif)
 
 ## Install
 
@@ -24,7 +30,7 @@ Answer `y` to add the marketplace, then pick a scope. The user scope turns it on
 
 In the desktop app: click + next to the prompt box, then Plugins, Add marketplace with `akaike-byob/cache-boom`, then Add plugin.
 
-Requires Claude Code 2.1.300 or later. Mods are an early-access feature and their API may change between releases.
+Works in the terminal and the desktop app. Requires Claude Code 2.1.300 or later. Mods are an early-access feature and their API may change between releases.
 
 ## What you see
 
@@ -37,15 +43,17 @@ After each model call, the mod checks the call's cache usage:
 
 A call from a subagent says so: `BOOM: subagent prompt cache miss, ...`.
 
-In a terminal, an animated explosion plays above the label for about 1.6 seconds. Other surfaces show the label alone.
+An animated explosion plays above the label for about 1.6 seconds. The terminal draws it in character cells. The desktop app draws the same explosion as an animated SVG. Other surfaces show the label alone.
 
 Small writes are normal and stay quiet. Each turn writes its new messages, a few hundred to a few thousand tokens.
 
 To see it once with sample numbers, run:
 
 ```
-/boom
+/cache-boom:boom
 ```
+
+Typing `boom` at the prompt finds it.
 
 ## Status line report
 
@@ -110,10 +118,12 @@ Layout:
 | --- | --- |
 | `.claude-plugin/plugin.json` | Manifest. |
 | `.claude-plugin/marketplace.json` | Lets this repository serve as its own marketplace. |
+| `commands/boom.md` | Declares `/cache-boom:boom`, so the desktop app lists it before a session starts. `hooks/register.tsx` answers it. |
 | `hooks/register.tsx` | The mod. |
 | `types/index.d.ts` | The mod's state contract and report types. |
 | `tests/blast.test.tsx` | Tests, run by `claude plugin test`. |
-| `assets/explosion.svg` | The README animation, drawn from the mod's own frames. |
+| `assets/explosion.svg` | The terminal README animation, drawn from the mod's own frames. |
+| `assets/desktop-explosion.gif` | The desktop README animation, captured from `drawAnimatedSvg`. |
 | `scripts/explosion-image/` | Regenerates `assets/explosion.svg`. |
 
 After changing the explosion, regenerate the README animation:
